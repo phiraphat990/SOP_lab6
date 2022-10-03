@@ -2,7 +2,6 @@ package com.example.lab6.view;
 
 import com.example.lab6.pojo.Wizard;
 import com.example.lab6.pojo.Wizards;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Span;
@@ -10,69 +9,70 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.ArrayList;
-@Route(value = ("mainPage.it"))
+@Route("mainPage.it")
 public class MainWizardView extends VerticalLayout {
-    private TextField fullname;
-    private NumberField dollars;
-    private ComboBox<String> position, school,house;
-    private Button back, create,update,delete,push;
-    private Text gender;
-    private RadioButtonGroup check;
+    private TextField fullName, money;
+    private RadioButtonGroup<String> genderGroup;
+    private ComboBox<String> position, school, house;
+    private Button previous, create, update, delete, next;
+
+    private HorizontalLayout buttonGroup;
 
     private Wizards wizards;
-    private int index = -1;
-    public MainWizardView(){
-        fullname = new TextField();
-        fullname.setPlaceholder("Fullname");
 
-        gender = new Text("Gender :");
-        check = new RadioButtonGroup<>();
-        check.setItems("Male","Female");
+    private int index = -1;
+
+    public MainWizardView() {
+        fullName = new TextField();
+        fullName.setPlaceholder("Fullname");
+
+        genderGroup = new RadioButtonGroup<>();
+        genderGroup.setItems("Male", "Female");
 
         position = new ComboBox<>();
-        position.setPlaceholder("Position");
         position.setItems("Student", "Teacher");
+        position.setPlaceholder("Position");
 
-        dollars = new NumberField("Dollars");
-        dollars.setPrefixComponent(new Span("$"));
+        money = new TextField();
+        money.setPrefixComponent(new Span("$"));
+        money.setLabel("Dollars");
 
         school = new ComboBox<>();
-        school.setPlaceholder("School");
         school.setItems("Hogwarts", "Beauxbatons", "Durmstrang");
+        school.setPlaceholder("School");
 
         house = new ComboBox<>();
-        house.setPlaceholder("House");
         house.setItems("Gryffindor", "Ravenclaw", "Hufflepuff", "Slyther");
+        house.setPlaceholder("House");
 
-        back =new Button("<<");
-        create = new Button("Create");
-        update = new Button("Update");
-        delete = new Button("Delete");
-        push = new Button(">>");
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(back,create,update,delete,push);
-        HorizontalLayout horizontalLayout2 = new HorizontalLayout();
-        horizontalLayout2.add(check);
-        add(fullname,gender,horizontalLayout2,position,dollars,school,house,horizontalLayout);
+        previous = new Button("<<");
+        create = new Button("create");
+        update = new Button("update");
+        delete = new Button("delete");
+        next = new Button(">>");
+
+        buttonGroup = new HorizontalLayout();
+
+        buttonGroup.add(previous, create, update, delete, next);
+
+        this.add(fullName, genderGroup, position, money, school, house, buttonGroup);
 
         this.wizards = this.getAllWizard();
 
-        push.addClickListener(event -> {
+        previous.addClickListener(event -> {
             --this.index;
             if (this.index <= 0) {
-                this.index = 0;
+                this.index = this.wizards.getModel().toArray().length - 1;
             }
             this.setAllItem();
         });
 
-        back.addClickListener(event -> {
+        next.addClickListener(event -> {
             ++ this.index;
             if (this.index >= this.wizards.getModel().toArray().length - 1) {
                 this.index = this.wizards.getModel().toArray().length - 1;
@@ -91,9 +91,8 @@ public class MainWizardView extends VerticalLayout {
         delete.addClickListener(event -> {
             this.deleteWizard();
         });
-
-
     }
+
     public Wizards getAllWizard() {
         Wizards out = WebClient.create()
                 .get()
@@ -104,6 +103,7 @@ public class MainWizardView extends VerticalLayout {
 
         return out;
     }
+
     public void setAllItem() {
         if (this.index <= 0) {
             this.index = 0;
@@ -113,27 +113,27 @@ public class MainWizardView extends VerticalLayout {
         }
 
         Wizard wizard = this.wizards.getModel().get(this.index);
-        fullname.setValue(wizard.getName());
+        fullName.setValue(wizard.getName());
 
         if (wizard.getSex().equals("m")) {
-            this.check.setValue("Male");
+            this.genderGroup.setValue("Male");
         }
         else {
-            this.check.setValue("Female");
+            this.genderGroup.setValue("Female");
         }
         position.setValue(wizard.getPosition());
-        dollars.setValue(Double.valueOf(wizard.getMoney()));
+        money.setValue(String.valueOf(wizard.getMoney()));
         school.setValue(wizard.getSchool());
         house.setValue(wizard.getHouse());
     }
 
     public void createWizard() {
         Wizard wizard = new Wizard();
-        wizard.setSex((String) check.getValue());
-        wizard.setName(fullname.getValue());
+        wizard.setSex(genderGroup.getValue());
+        wizard.setName(fullName.getValue());
         wizard.setSchool(school.getValue());
         wizard.setHouse(house.getValue());
-        wizard.setMoney(Double.parseDouble(String.valueOf(dollars.getValue())));
+        wizard.setMoney(Integer.parseInt((money.getValue())));
         wizard.setPosition(position.getValue());
         Boolean out = WebClient.create()
                 .post()
@@ -145,7 +145,7 @@ public class MainWizardView extends VerticalLayout {
                 .block();
 
         if (out) {
-            new Notification("Add Successfully", 1000).open();
+            new Notification("Wizard has been Create", 1000).open();
             this.wizards = this.getAllWizard();
         }
         else {
@@ -155,16 +155,16 @@ public class MainWizardView extends VerticalLayout {
 
     public void updateWizard() {
         Wizard wizard = this.wizards.getModel().get(this.index);
-        wizard.setSex((String) check.getValue());
-        wizard.setName(fullname.getValue());
+        wizard.setSex(genderGroup.getValue());
+        wizard.setName(fullName.getValue());
         wizard.setSchool(school.getValue());
         wizard.setHouse(house.getValue());
-        wizard.setMoney(Double.parseDouble(String.valueOf(dollars.getValue())));
+        wizard.setMoney(Integer.parseInt(money.getValue()));
         wizard.setPosition(position.getValue());
 
         System.out.println(wizard.get_id());
 
-        boolean out = WebClient.create()
+        Boolean out = WebClient.create()
                 .post()
                 .uri("http://localhost:8080/updateWizard")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -174,7 +174,7 @@ public class MainWizardView extends VerticalLayout {
                 .block();
 
         if (out) {
-            new Notification("Update Successfully", 1000).open();
+            new Notification("Wizard has been Update", 1000).open();
             this.wizards = this.getAllWizard();
         }
         else {
@@ -194,7 +194,7 @@ public class MainWizardView extends VerticalLayout {
                 .block();
 
         if (out) {
-            new Notification("Delete Successfully", 1000).open();
+            new Notification("Wizard has been Delete", 1000).open();
             this.wizards = this.getAllWizard();
             this.setAllItem();
         }
@@ -202,5 +202,4 @@ public class MainWizardView extends VerticalLayout {
             new Notification("Delete Failed", 1000).open();
         }
     }
-
 }

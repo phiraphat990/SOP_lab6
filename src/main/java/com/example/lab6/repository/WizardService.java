@@ -20,8 +20,14 @@ public class WizardService {
         return new Wizards((ArrayList<Wizard>) repository.findAll());
     }
 
-    public Wizard createWizard(Wizard wizard){
-        return  repository.insert(wizard);
+    public boolean createWizard(Wizard wizard){
+        try {
+            repository.insert(wizard);
+            return true;
+        }
+        catch (Exception e){
+            return false;
+        }
     }
 
     public  boolean deleteWizard(Wizard wizard){
@@ -35,7 +41,6 @@ public class WizardService {
     }
 
     public boolean updateWizard(Wizard wizard){
-//        return repository.save(wizard);
         try {
             repository.save(wizard);
             return true;

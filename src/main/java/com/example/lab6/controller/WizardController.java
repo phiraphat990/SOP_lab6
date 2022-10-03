@@ -21,21 +21,9 @@ public class WizardController {
         return ResponseEntity.ok(service.retrieveWizard());
     }
 
-//    @RequestMapping(value ="/addWizard", method = RequestMethod.POST)
-//    public ResponseEntity<?> addWizard(@RequestBody String sex,
-//                                       @RequestBody String name,
-//                                       @RequestBody String school,
-//                                       @RequestBody String house,
-//                                       @RequestBody double money,
-//                                       @RequestBody String position){
-//        Wizard n = service.createWizard(new Wizard(sex,name,school,house,money,position));
-//        return ResponseEntity.ok(n);
-//    }
-
     @RequestMapping(value ="/addWizard", method = RequestMethod.POST)
-    public ResponseEntity<?> addWizard(@RequestBody Wizard wizard){
-        Wizard n = service.createWizard(wizard);
-        return ResponseEntity.ok(n);
+    public  ResponseEntity<?> addWizard(@RequestBody Wizard wizard){
+        return ResponseEntity.ok(service.createWizard(wizard));
     }
 
     @RequestMapping(value ="/updateWizard", method = RequestMethod.POST)
